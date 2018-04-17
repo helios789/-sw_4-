@@ -21,20 +21,55 @@ var game = new Phaser.Game(config);
 
 function preload ()
 {
-    //this.load.image('ball', '../assets/star.png');
+    //this.load.image('balls', '../assets/yellow.png');
     this.load.spritesheet('balls', '../assets/balls.png', { frameWidth: 17, frameHeight: 17 });
     this.load.image('bomb', '../assets/bomb.png')
-    this.load.image('arrow','../assets/arrow.jpg')
+    this.load.image('button_L','../assets/Lbutton.png')
+    this.load.image('button_L_active','../assets/Lbutton_active.png')
+    this.load.image('button_R','../assets/Rbutton.png')
+    this.load.image('button_R_active','../assets/Rbutton_active.png')
 }
 
 function create ()
 {
    player = this.add.image(400,300, 'balls', Phaser.Math.Between(0,5));
-    
- 
+   player.blendMode = 'ADD';
+
+   var button_L_origin = this.add.image(100,500,'button_L').setScale(0.3);
+   var button_L_active = this.add.image(100,500,'button_L_active').setScale(0.3);	button_L_active.visible = false;
+   var button_R_origin = this.add.image(700,500,'button_R').setScale(0.3);
+   var button_R_active = this.add.image(700,500,'button_R_active').setScale(0.3);	button_R_active.visible = false;
+
    cursors = game.input.keyboard.createCursorKeys();
    bomb = this.add.image(400,100,'bomb');
    rt = this.make.renderTexture({ x: 0, y: 0, width: 800, height: 600 });
+
+    this.input.on('pointerdown', function (pointer) {
+    	if(pointer.x < 400)
+    	{
+    		button_L_origin.visible =false; 
+    		button_L_active.visible = true;
+    	}
+    	else
+    	{
+	    	 button_R_origin.visible = false;        
+	    	 button_R_active.visible = true;
+    	}
+
+    }, this);
+    this.input.on('pointerup', function (pointer) {
+    	if(pointer.x < 400)
+    	{
+    		button_L_origin.visible =true; 
+    		button_L_active.visible = false;
+    	}
+    	else
+    	{
+	    	 button_R_origin.visible = true;        
+	    	 button_R_active.visible = false;
+    	}
+    }, this);
+
 }
 
 function update ()
@@ -105,9 +140,10 @@ function draw(){
 		count = 0;
 	}
 	rt.globalAlpha = 0.2;
-	//rt.globalTint = ((0.5 + Math.random()) * 0xFFFFFF << 0);
+	rt.globalTint = ((0.5 + Math.random()) * 0xFFFFFF << 0);
 
 	rt.draw(player.texture, player.frame, player.x-13, player.y-13);
     rt.restore();
     count++;
 }
+

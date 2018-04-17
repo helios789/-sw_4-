@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<script>var username;</script>
+	<script src = "http://code.jquery.com/jquery-1.7.1.js"></script>
+	<script src = "http://localhost:3033/socket.io/socket.io.js"></script>
+</head>
+<body>
+	<div id = "log">
+		<span>id : <input type = "text" id="userid" /></span>
+		<span>roomname : <input type = "text" id="roomname" /></span>
+		<span><input type ="button" id="enter" value="roomin"/></span> 
+	</div>
+	<div id="room" style="display:none">
+		<p1>채팅방 목록</p1>
+	</div>
+	<div id="chat" style="display:none">
+		<div style="width: 300px; height:300px; border:solid 1px;" id="txtarea">
+			<dl id = "txtappend">
+			</dl>
+		</div>
+		<br />
+			<input type="text" style="width:255px;" id="txt"/><input type="button" value="Enter" id="btn" />
+	</div>
+	<script type="text/javascript">
+		$(document).ready(function(){
+			var socket = io.connect('http://localhost:3033');
+			//아이디,채팅방 이름 입력후 버튼을 누르면 이벤트 실행
+			$('#enter').click(function(){		
+				username = $('#userid');
+				var userid = $('#userid');
+				var roomname = $('#roomname');
+				if(!userid.val())//정보값 없을시 --> 수정해야함 
+				{
+					alert('정보입력 바람 ');
+				}
+				else{//server로 접속 유저아이디와 접속한 채팅방이름을 전송
+				socket.emit('join',{'userid':userid.val(),'roomname':roomname.val()});
+				socket.emit('make',{'userid':userid.val(),'roomname':roomname.val()});
+
+				//값 변환 출력창의 변화 
+				$('#room').attr('style','display:block');
+				$('#log').attr('style','display:none');
+				$('#chat').attr('style','display:block');
+				}
+			});
+			//새로 접속한 사용자가 있을 경우 알림을 받습니다.
+			socket.on('join',function(data){
+				alert(data);
+				$('#txtappend').append('<dd style="margin:0px;">'+data+'님이 접속하셧습니다.</dd>');
+			});
+			function createButton(context, id, func){
+			    var button = document.createElement("input");
+			    button.type = "button";
+			    button.value = id;
+			    button.onclick = func;
+			    context.appendChild(button);
+			}
+				//방번호를 서버로부터 전달 받는
+				socket.on('make',function(data){
+					var roomnum;
+					roomnum=data.roomlist[data.roomlist.length-1];
+					createButton(document.body,roomnum, function(){
+						socket.emit('join',{'userid':username,'roomname':roomnum});
+							alert(roomnum);
+						});
+				});
+
+			//메세지 전송 이벤트
+			$('#btn').click(function(){
+				var message = $('#txt').val();
+				socket.emit('message',message);
+				alert('message');
+			});
+			socket.on('message',function(data){
+				$('#txtappend').append('<dd style="margin:0px;">'+data+'</dd>');
+				$('#txt').val('');
+			});
+		});
+	</script>
+</body>
+</html>

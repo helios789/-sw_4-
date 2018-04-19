@@ -27,7 +27,6 @@ class playGame extends Phaser.Scene
 
 	preload ()
 	{
-	    //this.load.image('balls', '../assets/yellow.png');
 	    this.load.spritesheet('balls', '../assets/balls.png', { frameWidth: 17, frameHeight: 17 });
 	    this.load.image('bomb', '../assets/bomb.png')
 	    this.load.image('button_L','../assets/Lbutton.png')
@@ -39,28 +38,36 @@ class playGame extends Phaser.Scene
 	create ()
 	{
 	   player = this.add.image(game.config.width/2, game.config.height/2, 'balls', Phaser.Math.Between(0,5));
+	   bomb = this.add.image(game.config.width/2, game.config.height / 8, 'bomb');
 
 	   var button_L_origin = this.add.image(game.config.width/5 ,game.config.height / 8 * 7,'button_L').setScale(0.3);
 	   var button_L_active = this.add.image(game.config.width/5 ,game.config.height / 8 * 7,'button_L_active').setScale(0.3);	button_L_active.visible = false;
 	   var button_R_origin = this.add.image(game.config.width/5 * 4 ,game.config.height / 8 * 7,'button_R').setScale(0.3);
 	   var button_R_active = this.add.image(game.config.width/5 * 4 ,game.config.height / 8 * 7,'button_R_active').setScale(0.3);	button_R_active.visible = false;
 
-	  
-	   bomb = this.add.image(game.config.width/2, game.config.height / 8, 'bomb');
+	  cursors = game.input.keyboard.createCursorKeys();	
 
-		cursors = game.input.keyboard.createCursorKeys();
 	    this.input.on('pointerdown', function (pointer) {
 	    	if(pointer.x < game.config.width/2)
 	    		button_L_active.visible = true;
 	    	else   
 		    	button_R_active.visible = true;
-
 	    }, this);
-
 	    this.input.on('pointerup', function (pointer) {
 	    		button_L_active.visible = button_R_active.visible =false;      
 	    }, this);
-	    
+	    this.input.keyboard.on('keydown_LEFT', function(event){
+	    	button_L_active.visible = true;
+	    }, this);
+	    this.input.keyboard.on('keyup_LEFT', function(event){
+	    	button_L_active.visible = false;
+	    }, this);
+	    this.input.keyboard.on('keydown_RIGHT', function(event){
+	    	button_R_active.visible = true;
+	    }, this);
+	    this.input.keyboard.on('keyup_RIGHT', function(event){
+	    	button_R_active.visible = false;
+	    }, this);
 	}
 
 	update ()

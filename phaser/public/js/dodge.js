@@ -1,11 +1,12 @@
 var game;
+
 window.onload = function(){
 	var gameConfig = {
 	    type: Phaser.CANVAS,
 	    width: 720,
 	    height: 1280,
 	    backgroundColor: '#222222',
-	    scene: [playGame]
+	    scene: [game_Scene]
 	};
 	game = new Phaser.Game(gameConfig);
     window.focus()
@@ -22,6 +23,7 @@ var player_pos = 1.57;
 var player_speed = 0.05;
 var bomb_pos = 3;
 var bomb_speed = 0.03;
+var other_players;
 
 class playGame extends Phaser.Scene
 {
@@ -110,7 +112,15 @@ class playGame extends Phaser.Scene
 	    	}
 	    }
 	}
+
+	new_p()
+	{
+		this.add.image(game.config.width/2, game.config.height/2, 'balls', Phaser.Math.Between(0,5));
+	}
 }
+
+var game_Scene = new playGame();
+
 
 // pure javascript to scale the game
 function resize() {

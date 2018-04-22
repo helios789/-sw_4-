@@ -15,9 +15,18 @@ app.use(myLogger)
 app.get('/',function(req,res){
 	res.sendFile('index.html');
 });
+
+server.lastPlayderID = 0;
+
 io.on('connection',function(socket){
     socket.on('test',function(){
         console.log('test received');
+        socket.player = {
+            id: server.lastPlayderID++,
+            x: 200,
+            y: 200
+        };
+    socket.broadcast.emit('newplayer',socket.player);
     });
 });
 

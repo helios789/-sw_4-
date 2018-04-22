@@ -11,6 +11,8 @@ window.onload = function(){
     window.focus()
     resize();
     window.addEventListener("resize", resize, false);
+    
+    Client.sendTest();
 }
 
 var player;
@@ -80,7 +82,8 @@ class playGame extends Phaser.Scene
 			else
 	    		player_pos -= player_speed;
 		}
-	    else if (cursors.right.isDown)
+
+	    if (cursors.right.isDown)
 	    {
 	        player_pos -= player_speed;
 	    }
@@ -106,10 +109,6 @@ class playGame extends Phaser.Scene
 	    		player.setAlpha(0.2);
 	    	}
 	    }
-
-
-
-
 	}
 }
 

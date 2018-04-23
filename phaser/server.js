@@ -13,7 +13,7 @@ var myLogger = function (req, res, next) {
 app.use(myLogger)
 
 app.get('/',function(req,res){
-	res.sendFile('index.html');
+	res.sendFile("index2.html", { root: path.join(__dirname, 'public') })
 });
 
 server.lastPlayderID = 0;
@@ -27,6 +27,18 @@ io.on('connection',function(socket){
             y: 200
         };
     socket.broadcast.emit('newplayer',socket.player);
+    });
+
+
+    socket.on('move',function(){
+        console.log('move');
+        socket.broadcast.emit('move_p');
+
+    });
+
+    socket.on('stop',function(){
+        console.log('stop');
+        socket.broadcast.emit('stop_p');
     });
 });
 

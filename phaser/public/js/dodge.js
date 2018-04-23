@@ -23,7 +23,10 @@ var player_pos = 1.57;
 var player_speed = 0.05;
 var bomb_pos = 3;
 var bomb_speed = 0.03;
+
 var other_players;
+var other_players_ismove = 0;
+var other_player_pos = 1.57;
 
 class playGame extends Phaser.Scene
 {
@@ -56,9 +59,11 @@ class playGame extends Phaser.Scene
 	    		button_L_active.visible = true;
 	    	else   
 		    	button_R_active.visible = true;
+		    Client.move_p();
 	    }, this);
 	    this.input.on('pointerup', function (pointer) {
-	    		button_L_active.visible = button_R_active.visible =false;      
+	    		button_L_active.visible = button_R_active.visible =false;  
+	    	 Client.stop_p();    
 	    }, this);
 	    this.input.keyboard.on('keydown_LEFT', function(event){
 	    	button_L_active.visible = true;
@@ -76,7 +81,6 @@ class playGame extends Phaser.Scene
 
 	update ()
 	{
-
 		if(game.input.activePointer.isDown)
 		{
 			if(game.input.activePointer.x < game.config.width/2)
@@ -95,6 +99,7 @@ class playGame extends Phaser.Scene
 	    }
 	    player.x = game.config.width /2 + Math.cos(player_pos) * 150;
 		player.y = game.config.height/2 + Math.sin(player_pos) * 150;
+
 	    //center + cos(iter) * radius 
 	    //player.x += Math.cos(player_pos) * 5;
 	    //player.y += Math.sin(player_pos) * 5;
@@ -111,11 +116,26 @@ class playGame extends Phaser.Scene
 	    		player.setAlpha(0.2);
 	    	}
 	    }
+	    if(other_players_ismove === 1)
+	    {
+	    	other_player_pos += player_speed;
+	    	other_players.x = game.config.width /2 + Math.cos(other_player_pos) * 150;
+			other_players.y = game.config.height/2 + Math.sin(other_player_pos) * 150;
+	    }
 	}
 
 	new_p()
 	{
-		this.add.image(game.config.width/2, game.config.height/2, 'balls', Phaser.Math.Between(0,5));
+		other_players = this.add.image(game.config.width/2, game.config.height/2 + 150, 'balls', Phaser.Math.Between(0,5));
+	}
+
+	move_p()
+	{
+		other_players_ismove = 1;
+	}
+	stop_p()
+	{
+		other_players_ismove = 0;
 	}
 }
 

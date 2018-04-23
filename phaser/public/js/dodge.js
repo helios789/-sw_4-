@@ -13,7 +13,7 @@ window.onload = function(){
     resize();
     window.addEventListener("resize", resize, false);
     
-    Client.sendTest();
+    Client.new_p();
 }
 
 var player;
@@ -56,10 +56,15 @@ class playGame extends Phaser.Scene
 
 	    this.input.on('pointerdown', function (pointer) {
 	    	if(pointer.x < game.config.width/2)
+	    	{
 	    		button_L_active.visible = true;
-	    	else   
+	    		Client.move_p_Left();
+	    	}
+	    	else  
+	    	{
 		    	button_R_active.visible = true;
-		    Client.move_p();
+		    	Client.move_p_Right();
+	    	}
 	    }, this);
 	    this.input.on('pointerup', function (pointer) {
 	    		button_L_active.visible = button_R_active.visible =false;  
@@ -67,15 +72,19 @@ class playGame extends Phaser.Scene
 	    }, this);
 	    this.input.keyboard.on('keydown_LEFT', function(event){
 	    	button_L_active.visible = true;
+	    	Client.move_p_Left();
 	    }, this);
 	    this.input.keyboard.on('keyup_LEFT', function(event){
 	    	button_L_active.visible = false;
+	    	 Client.stop_p();
 	    }, this);
 	    this.input.keyboard.on('keydown_RIGHT', function(event){
 	    	button_R_active.visible = true;
+	    	Client.move_p_Right();
 	    }, this);
 	    this.input.keyboard.on('keyup_RIGHT', function(event){
 	    	button_R_active.visible = false;
+	    	 Client.stop_p();
 	    }, this);
 	}
 
@@ -116,9 +125,9 @@ class playGame extends Phaser.Scene
 	    		player.setAlpha(0.2);
 	    	}
 	    }
-	    if(other_players_ismove === 1)
+	    if(other_players_ismove != 0)
 	    {
-	    	other_player_pos += player_speed;
+	    	other_player_pos += (other_players_ismove * player_speed);
 	    	other_players.x = game.config.width /2 + Math.cos(other_player_pos) * 150;
 			other_players.y = game.config.height/2 + Math.sin(other_player_pos) * 150;
 	    }
@@ -126,10 +135,14 @@ class playGame extends Phaser.Scene
 
 	new_p()
 	{
-		other_players = this.add.image(game.config.width/2, game.config.height/2 + 150, 'balls', Phaser.Math.Between(0,5));
+		other_players = this.add.image(game.config.width/2, game.config.height / 2 + 150, 'bomb');
 	}
 
-	move_p()
+	move_p_Right()
+	{
+		other_players_ismove = -1;
+	}
+	move_p_Left()
 	{
 		other_players_ismove = 1;
 	}

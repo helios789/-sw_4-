@@ -1,151 +1,222 @@
-// create a new scene named "Game"
-let gameScene = new Phaser.Scene('Game');
+var game;
 
-// game parameters
-// gameScene.playerSpeed = 1.5;
-// gameScene.enemySpeed = 2;
-// gameScene.enemyMaxY = 280;
-// gameScene.enemyMinY = 80;
-// gameScene.isPlayerAlive = true;
-
-// some parameters for our scene
-gameScene.init = function() {
-  this.playerSpeed = 1.5;
-  this.enemySpeed = 2;
-  this.enemyMaxY = 280;
-  this.enemyMinY = 80;
+window.onload = function(){
+  var gameConfig = {
+      type: Phaser.CANVAS,
+      width: 720,
+      height: 1280,
+      physics: {
+          default: 'arcade',
+          arcade: {
+              gravity: { y: 0 },
+              debug: false
+          }
+      },
+      backgroundColor: '#222222',
+      parent: 'phaser-example',
+      scene: [game_Scene]
+  };
+  game = new Phaser.Game(gameConfig);
+    window.focus()
+    resize();
+    window.addEventListener("resize", resize, false);
+    
+    Client.new_p();
 }
 
-// load asset files for our game
-gameScene.preload = function() {
+var player;
+var bomb;
+var cursors;
+var player_pos = 1.57;
+var player_speed = 0.05;
+var bomb_pos = 3;
+var bomb_speed = 0.03;
+var particle1;
+var deathZone;
+var graphics;
+var other_players;
+var other_players_ismove = 0;
+var other_player_pos = 1.57;
 
-  // load images
-  this.load.image('background', 'assets/background.png');
-  this.load.image('player', 'assets/player.png');
-  this.load.image('dragon', 'assets/dragon.png');
-  this.load.image('treasure', 'assets/treasure.png');
-};
+class playGame extends Phaser.Scene
+{
+  constructor(){  super("PlayGame");  }
 
-// executed once, after assets were loaded
-gameScene.create = function() {
+  preload ()
+  {
+      this.load.spritesheet('balls', '../assets/balls.png', { frameWidth: 17, frameHeight: 17 });
+      this.load.image('bomb', '../assets/bomb.png');
+      this.load.image('button_L','../assets/Lbutton.png');
+      this.load.image('button_L_active','../assets/Lbutton_active.png');
+      this.load.image('button_R','../assets/Rbutton.png');
+      this.load.image('button_R_active','../assets/Rbutton_active.png');
+      this.load.atlas('flares', '../assets/flares.png', '../assets/flares.json');
+  }
 
-  // background
-  let bg = this.add.sprite(0, 0, 'background');
+  create ()
+  {
+     player = this.add.image(game.config.width/2, game.config.height/2, 'balls', Phaser.Math.Between(0,5));
+     player.setScale(4);
+     bomb = this.add.image(game.config.width/2, game.config.height / 8, 'bomb');
 
-  // change origin to the top-left of the sprite
-  bg.setOrigin(0, 0);
+     graphics = this.add.graphics();
+     deathZone = new Phaser.Geom.Circle(game.config.width/2, game.config.height/2, 30);
 
-  // player
-  this.player = this.add.sprite(40, this.sys.game.config.height / 2, 'player');
+    particle1 = this.add.particles('flares');
+      particle1.createEmitter({
+        frame: [ 'red'],
+          x: game.config.width/2,
+          y: game.config.height/3,
+          angle: { min: 180, max: 360 },
+          speed: 400,
+          gravityY: 350,
+          lifespan: 4000,
+          quantity: 0.5,
+          scale: { start: 0.5, end: 0.1 },
+          blendMode: 'ADD',
+          deathZone: { type: 'onEnter', source: deathZone },
+          deathCallback : this.death
+      });
 
-  // scale down
-  this.player.setScale(0.5);
 
-  // goal
-  this.treasure = this.add.sprite(this.sys.game.config.width - 80, this.sys.game.config.height / 2, 'treasure');
-  this.treasure.setScale(0.6);
+     var button_L_origin = this.add.image(game.config.width/5 ,game.config.height / 8 * 7,'button_L').setScale(0.3);
+     var button_L_active = this.add.image(game.config.width/5 ,game.config.height / 8 * 7,'button_L_active').setScale(0.3); button_L_active.visible = false;
+     var button_R_origin = this.add.image(game.config.width/5 * 4 ,game.config.height / 8 * 7,'button_R').setScale(0.3);
+     var button_R_active = this.add.image(game.config.width/5 * 4 ,game.config.height / 8 * 7,'button_R_active').setScale(0.3); button_R_active.visible = false;
 
-  // group of enemies
-  this.enemies = this.add.group({
-    key: 'dragon',
-    //make N개 dragon
-    repeat: 3,
-    setXY: {
-      x: 110,
-      y: 100,
-      stepX: 80,
-      stepY: 0
+    cursors = game.input.keyboard.createCursorKeys(); 
+
+      this.input.on('pointerdown', function (pointer) {
+
+        if(pointer.x < game.config.width/2)
+        {
+          button_L_active.visible = true;
+          Client.move_p_Left();
+        }
+        else  
+        {
+          button_R_active.visible = true;
+          Client.move_p_Right();
+        }
+      }, this);
+      this.input.on('pointerup', function (pointer) {
+          button_L_active.visible = button_R_active.visible =false;  
+         Client.stop_p();    
+      }, this);
+      this.input.keyboard.on('keydown_LEFT', function(event){
+        button_L_active.visible = true;
+        Client.move_p_Left();
+      }, this);
+      this.input.keyboard.on('keyup_LEFT', function(event){
+        button_L_active.visible = false;
+         Client.stop_p();
+      }, this);
+      this.input.keyboard.on('keydown_RIGHT', function(event){
+        button_R_active.visible = true;
+        Client.move_p_Right();
+      }, this);
+      this.input.keyboard.on('keyup_RIGHT', function(event){
+        button_R_active.visible = false;
+         Client.stop_p();
+      }, this);
+  }
+
+  update ()
+  {
+    if(game.input.activePointer.isDown)
+    {
+      if(game.input.activePointer.x < game.config.width/2)
+          player_pos += player_speed;
+      else
+          player_pos -= player_speed;
     }
-  });
 
-  // scale enemies
-  Phaser.Actions.ScaleXY(this.enemies.getChildren(), -0.5, -0.5);
+      if (cursors.right.isDown)
+      {
+          player_pos -= player_speed;
+      }
+      else if(cursors.left.isDown)
+      {
+        player_pos += player_speed;
+      }
+      player.x = game.config.width /2 + Math.cos(player_pos) * 250;
+    player.y = game.config.height/2 + Math.sin(player_pos) * 250;
 
-  // set speeds
-  Phaser.Actions.Call(this.enemies.getChildren(), function(enemy) {
-    enemy.speed = Math.random() * 2 + 1;
-  }, this);
+      //center + cos(iter) * radius 
+      //player.x += Math.cos(player_pos) * 5;
+      //player.y += Math.sin(player_pos) * 5;
 
-  // player is alive
-  this.isPlayerAlive = true;
-};
 
-// executed on every frame (60 times per second)
-gameScene.update = function() {
+    bomb_pos += bomb_speed;
+    bomb.y = game.config.height/2 + Math.sin(bomb_pos) * game.config.height / 3 ;
 
-  // only if the player is alive
-  if (!this.isPlayerAlive) {
-    return;
+      if(other_players_ismove != 0)
+      {
+        other_player_pos += (other_players_ismove * player_speed);
+        other_players.x = game.config.width /2 + Math.cos(other_player_pos) * 250;
+      other_players.y = game.config.height/2 + Math.sin(other_player_pos) * 250;
+      }
+
+      graphics.clear();
+      graphics.lineStyle(10, 0x00ff00, 1);
+      graphics.strokeCircleShape(deathZone);
+      deathZone.x = player.x;
+      deathZone.y = player.y;
+
+
+      if (this.checkOverlap(player, bomb))
+      {
+          player.setScale(4);
+          player.setAlpha(0.2);
+      }
   }
 
-  // check for active input
-  if (this.input.activePointer.isDown) {
-
-    // player walks
-    this.player.x += this.playerSpeed;
+  new_p()
+  {
+    other_players = this.add.image(game.config.width/2, game.config.height / 2 + 150, 'bomb');
   }
 
-  // treasure collision
-  if (Phaser.Geom.Intersects.RectangleToRectangle(this.player.getBounds(), this.treasure.getBounds())) {
-    this.gameOver();
+  move_p_Right()
+  {
+    other_players_ismove = -1;
+  }
+  move_p_Left()
+  {
+    other_players_ismove = 1;
+  }
+  stop_p()
+  {
+    other_players_ismove = 0;
+  }
+  checkOverlap(_player, _enemy)
+  {
+    var boundsB = _enemy.getBounds();
+
+    return Phaser.Geom.Rectangle.Overlaps(deathZone, boundsB)
+  }
+  death()
+  {
+    player.setScale(4);
+    player.setAlpha(0.2);
   }
 
-  // enemy movement and collision
-  let enemies = this.enemies.getChildren();
-  let numEnemies = enemies.length;
 
-  for (let i = 0; i < numEnemies; i++) {
+}
+var game_Scene = new playGame();
 
-    // move enemies
-    enemies[i].y += enemies[i].speed;
-
-    // reverse movement if reached the edges
-    if (enemies[i].y >= this.enemyMaxY && enemies[i].speed > 0) {
-      enemies[i].speed *= -1;
-    } else if (enemies[i].y <= this.enemyMinY && enemies[i].speed < 0) {
-      enemies[i].speed *= -1;
+// pure javascript to scale the game
+function resize() {
+    var canvas = document.querySelector("canvas");
+    var windowWidth = window.innerWidth;
+    var windowHeight = window.innerHeight;
+    var windowRatio = windowWidth / windowHeight;
+    var gameRatio = game.config.width / game.config.height;
+    if(windowRatio < gameRatio){
+        canvas.style.width = windowWidth + "px";
+        canvas.style.height = (windowWidth / gameRatio) + "px";
     }
-
-    // enemy collision
-    if (Phaser.Geom.Intersects.RectangleToRectangle(this.player.getBounds(), enemies[i].getBounds())) {
-      this.gameOver();
-      break;
+    else{
+        canvas.style.width = (windowHeight * gameRatio) + "px";
+        canvas.style.height = windowHeight + "px";
     }
-  }
-};
-
-gameScene.gameOver = function() {
-
-  // flag to set player is dead
-  this.isPlayerAlive = false;
-
-  // shake the camera
-  this.cameras.main.shake(3000);
-
-  // fade camera
-  this.time.delayedCall(250, function() {
-    this.cameras.main.fade(200);
-  }, [], this);
-
-  // restart game
-  this.time.delayedCall(500, function() {
-    this.scene.manager.bootScene(this);
-  }, [], this);
-
-  // reset camera effects
-  this.time.delayedCall(600, function() {
-    this.cameras.main.resetFX();
-  }, [], this);
-};
-
-
-
-// our game's configuration
-let config = {
-  type: Phaser.AUTO,
-  width: 640,
-  height: 360,
-  scene: gameScene
-};
-// create the game, and pass it the configuration
-let game = new Phaser.Game(config);
+}

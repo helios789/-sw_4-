@@ -20,8 +20,6 @@ window.onload = function(){
     window.focus()
     resize();
     window.addEventListener("resize", resize, false);
-    
-    Client.new_p();
 }
 
 var player;
@@ -34,9 +32,13 @@ var bomb_speed = 0.03;
 var particle1;
 var deathZone;
 var graphics;
-var other_players;
-var other_players_ismove = 0;
-var other_player_pos = 1.57;
+
+var others = {
+  id : {},
+  player : {},
+  isMove : {},
+  pos : {}
+};
 
 class playGame extends Phaser.Scene
 {
@@ -55,28 +57,27 @@ class playGame extends Phaser.Scene
 
   create ()
   {
-     player = this.add.image(game.config.width/2, game.config.height/2, 'balls', Phaser.Math.Between(0,5));
-     player.setScale(4);
-     bomb = this.add.image(game.config.width/2, game.config.height / 8, 'bomb');
+	 player = this.add.image(game.config.width/2, game.config.height/2, 'balls', Phaser.Math.Between(0,5));
+	 bomb = this.add.image(game.config.width/2, game.config.height / 8, 'bomb');
 
-     graphics = this.add.graphics();
-     deathZone = new Phaser.Geom.Circle(game.config.width/2, game.config.height/2, 30);
+	 graphics = this.add.graphics({lineStyle : {width : 5, color : 0x00ff00}});
+	 deathZone = new Phaser.Geom.Circle(game.config.width/2, game.config.height/2, 10);
 
     particle1 = this.add.particles('flares');
-      particle1.createEmitter({
-        frame: [ 'red'],
-          x: game.config.width/2,
-          y: game.config.height/3,
-          angle: { min: 180, max: 360 },
-          speed: 400,
-          gravityY: 350,
-          lifespan: 4000,
-          quantity: 0.5,
-          scale: { start: 0.5, end: 0.1 },
-          blendMode: 'ADD',
-          deathZone: { type: 'onEnter', source: deathZone },
-          deathCallback : this.death
-      });
+	  particle1.createEmitter({
+		frame: [ 'red'],
+		x: game.config.width/2,
+		y: game.config.height/3,
+		angle: { min: 180, max: 360 },
+		speed: 400,
+		gravityY: 350,
+		lifespan: 4000,
+		quantity: 0.5,
+		scale: { start: 0.5, end: 0.1 },
+		blendMode: 'ADD',
+		deathZone: { type: 'onEnter', source: deathZone },
+		deathCallback : this.death
+	});
 
 
      var button_L_origin = this.add.image(game.config.width/5 ,game.config.height / 8 * 7,'button_L').setScale(0.3);
@@ -87,7 +88,6 @@ class playGame extends Phaser.Scene
     cursors = game.input.keyboard.createCursorKeys(); 
 
       this.input.on('pointerdown', function (pointer) {
-
         if(pointer.x < game.config.width/2)
         {
           button_L_active.visible = true;
@@ -99,6 +99,7 @@ class playGame extends Phaser.Scene
           Client.move_p_Right();
         }
       }, this);
+
       this.input.on('pointerup', function (pointer) {
           button_L_active.visible = button_R_active.visible =false;  
          Client.stop_p();    
@@ -119,6 +120,8 @@ class playGame extends Phaser.Scene
         button_R_active.visible = false;
          Client.stop_p();
       }, this);
+
+      Client.new_p();
   }
 
   update ()
@@ -131,76 +134,77 @@ class playGame extends Phaser.Scene
           player_pos -= player_speed;
     }
 
-      if (cursors.right.isDown)
-      {
-          player_pos -= player_speed;
+  	if (cursors.right.isDown)
+  	{
+  		player_pos -= player_speed;
+  	}
+  	else if(cursors.left.isDown)
+  	{
+  		player_pos += player_speed;
+  	}
+  	player.x = game.config.width /2 + Math.cos(player_pos) * 250;
+  	player.y = game.config.height/2 + Math.sin(player_pos) * 250;
+
+  	//center + cos(iter) * radius 
+  	//player.x += Math.cos(player_pos) * 5;
+  	//player.y += Math.sin(player_pos) * 5;
+
+
+  	bomb_pos += bomb_speed;
+  	bomb.y = game.config.height/2 + Math.sin(bomb_pos) * game.config.height / 3 ;
+
+  	for(var i in others.id)
+  	{
+      	if(others.isMove[i] != 0)
+      	{
+      		others.pos[i] += (others.isMove[i] * player_speed);
+  		  	others.player[i].x = game.config.width /2 + Math.cos(others.pos[i]) * 250;
+  			  others.player[i].y = game.config.height/2 + Math.sin(others.pos[i]) * 250;
+      	}
       }
-      else if(cursors.left.isDown)
-      {
-        player_pos += player_speed;
-      }
-      player.x = game.config.width /2 + Math.cos(player_pos) * 250;
-    player.y = game.config.height/2 + Math.sin(player_pos) * 250;
 
-      //center + cos(iter) * radius 
-      //player.x += Math.cos(player_pos) * 5;
-      //player.y += Math.sin(player_pos) * 5;
+  	graphics.clear();
+  	graphics.strokeCircleShape(deathZone);
+  	deathZone.x = player.x;
+  	deathZone.y = player.y;
 
-
-    bomb_pos += bomb_speed;
-    bomb.y = game.config.height/2 + Math.sin(bomb_pos) * game.config.height / 3 ;
-
-      if(other_players_ismove != 0)
-      {
-        other_player_pos += (other_players_ismove * player_speed);
-        other_players.x = game.config.width /2 + Math.cos(other_player_pos) * 250;
-      other_players.y = game.config.height/2 + Math.sin(other_player_pos) * 250;
-      }
-
-      graphics.clear();
-      graphics.lineStyle(10, 0x00ff00, 1);
-      graphics.strokeCircleShape(deathZone);
-      deathZone.x = player.x;
-      deathZone.y = player.y;
-
-
-      if (this.checkOverlap(player, bomb))
-      {
-          player.setScale(4);
-          player.setAlpha(0.2);
-      }
+  	if (this.checkOverlap(bomb))
+  	{
+  		player.setScale(4);
+  		player.setAlpha(0.2);
+  	}
   }
 
-  new_p()
+  addNewPlayer(id, x, y)
   {
-    other_players = this.add.image(game.config.width/2, game.config.height / 2 + 150, 'bomb');
+    others.id[id] = id;
+    others.player[id] =  this.add.image(x, y, 'balls', 3);
+    others.isMove[id] = 0;
+    others.pos[id] = 1.57;
+    console.log(others.player);
   }
-
-  move_p_Right()
+  move_p_Right(id)
   {
-    other_players_ismove = -1;
+    others.isMove[id] = -1;
   }
-  move_p_Left()
+  move_p_Left(id)
   {
-    other_players_ismove = 1;
+    others.isMove[id] = 1;
   }
-  stop_p()
+  stop_p(id)
   {
-    other_players_ismove = 0;
+    others.isMove[id] = 0;
   }
-  checkOverlap(_player, _enemy)
+  checkOverlap(_enemy)
   {
     var boundsB = _enemy.getBounds();
-
-    return Phaser.Geom.Rectangle.Overlaps(deathZone, boundsB)
+    return Phaser.Geom.Rectangle.Overlaps(deathZone, boundsB);
   }
   death()
   {
     player.setScale(4);
     player.setAlpha(0.2);
   }
-
-
 }
 var game_Scene = new playGame();
 

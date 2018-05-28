@@ -27,9 +27,17 @@ var bomb;
 var cursors;
 var player_pos = 1.57;
 var player_speed = 0.05;
+
+var score = 0;
+var stage = 1;
+var text_score;
+var text_stage;
+
 var bomb_pos = 3;
 var bomb_speed = 0.03;
-var particle1;
+
+var emitter;
+var particles;
 var deathZone;
 var graphics;
 
@@ -53,32 +61,40 @@ class playGame extends Phaser.Scene
       this.load.image('button_R','../assets/Rbutton.png');
       this.load.image('button_R_active','../assets/Rbutton_active.png');
       this.load.atlas('flares', '../assets/flares.png', '../assets/flares.json');
+      this.load.json('enemy1', '../assets/enemy1.json');
+      this.load.json('enemy2', '../assets/enemy2.json');
+      this.load.json('enemy3', '../assets/enemy3.json');
   }
 
   create ()
   {
-	 player = this.add.image(game.config.width/2, game.config.height/2, 'balls', Phaser.Math.Between(0,5));
-	 bomb = this.add.image(game.config.width/2, game.config.height / 8, 'bomb');
 
-	 graphics = this.add.graphics({lineStyle : {width : 5, color : 0x00ff00}});
-	 deathZone = new Phaser.Geom.Circle(game.config.width/2, game.config.height/2, 10);
+  text_stage = this.add.text(50, 50, 'STAGE : 1', { fontFamily: 'Arial', fontSize: 25, color: '#ffffff' });
+  text_score = this.add.text(50, 100, 'SCORE : 0', { fontFamily: 'Arial', fontSize: 25, color: '#ffffff' });
 
-    particle1 = this.add.particles('flares');
-	  particle1.createEmitter({
-		frame: [ 'red'],
-		x: game.config.width/2,
-		y: game.config.height/3,
-		angle: { min: 180, max: 360 },
-		speed: 400,
-		gravityY: 350,
-		lifespan: 4000,
-		quantity: 0.5,
-		scale: { start: 0.5, end: 0.1 },
-		blendMode: 'ADD',
-		deathZone: { type: 'onEnter', source: deathZone },
-		deathCallback : this.death
-	});
+	 player = this.physics.add.image(game.config.width/2, game.config.height/2 + 250, 'balls', Phaser.Math.Between(0,5)).setActive();
+	 bomb = this.physics.add.image(game.config.width/2, game.config.height / 8, 'bomb').setActive();
+   this.physics.add.collider(player, bomb, this.death, null, this);
 
+	 graphics = this.add.graphics({lineStyle : {width : 2, color : 0x00ff00}});
+	 //deathZone = player.getBounds();
+   //new Phaser.Geom.Circle(game.config.width/2, game.config.height/2, 10);
+   deathZone = {
+      contains : function(x, y){
+          var hit = player.body.hitTest(x,y);
+          if(hit)
+          {
+                player.setScale(4);
+                player.setAlpha(0.2);
+                //game END
+          }
+          return hit;
+       }
+   }
+
+    particles = this.add.particles('flares');
+    emitter = particles.createEmitter(this.cache.json.get('enemy1'));
+    emitter.setDeathZone({ type: 'onEnter', source: deathZone });
 
      var button_L_origin = this.add.image(game.config.width/5 ,game.config.height / 8 * 7,'button_L').setScale(0.3);
      var button_L_active = this.add.image(game.config.width/5 ,game.config.height / 8 * 7,'button_L_active').setScale(0.3); button_L_active.visible = false;
@@ -142,9 +158,13 @@ class playGame extends Phaser.Scene
   	{
   		player_pos += player_speed;
   	}
+    //graphics.clear();
   	player.x = game.config.width /2 + Math.cos(player_pos) * 250;
   	player.y = game.config.height/2 + Math.sin(player_pos) * 250;
 
+    //graphics.strokeCircleShape(deathZone);
+    //deathZone.x = player.x;
+    //deathZone.y = player.y;
   	//center + cos(iter) * radius 
   	//player.x += Math.cos(player_pos) * 5;
   	//player.y += Math.sin(player_pos) * 5;
@@ -163,16 +183,38 @@ class playGame extends Phaser.Scene
       	}
       }
 
-  	graphics.clear();
-  	graphics.strokeCircleShape(deathZone);
-  	deathZone.x = player.x;
-  	deathZone.y = player.y;
-
-  	if (this.checkOverlap(bomb))
+  	//if (this.checkOverlap(bomb))
   	{
-  		player.setScale(4);
-  		player.setAlpha(0.2);
+  		//player.setScale(4);
+  		//player.setAlpha(0.2);
   	}
+    score++;
+    if(score % 10 == 0)
+      text_score.setText('SCORE : '+score);
+    if(score % 1000 == 0)
+       text_stage.setText('STAGE : '+ (++stage));
+
+     if(score == 250)
+     {
+        particles.destroy();
+        particles = this.add.particles('flares');
+        emitter = particles.createEmitter(this.cache.json.get('enemy2'));
+        emitter.setDeathZone({ type: 'onEnter', source: deathZone });
+     }
+     else if(score == 500)
+     {
+        particles.destroy();
+        particles = this.add.particles('flares');
+        emitter = particles.createEmitter(this.cache.json.get('enemy3'));
+        emitter.setDeathZone({ type: 'onEnter', source: deathZone });
+     }
+     else if(score == 750)
+     {
+        particles.destroy();
+        particles = this.add.particles('flares');
+        emitter = particles.createEmitter(this.cache.json.get('enemy1'));
+        emitter.setDeathZone({ type: 'onEnter', source: deathZone });
+     }
   }
 
   addNewPlayer(id, x, y)
@@ -206,6 +248,7 @@ class playGame extends Phaser.Scene
     player.setAlpha(0.2);
   }
 }
+
 var game_Scene = new playGame();
 
 // pure javascript to scale the game

@@ -1,7 +1,7 @@
 var game;
-
+var gameConfig;
 window.onload = function(){
-  var gameConfig = {
+      gameConfig = {
       type: Phaser.CANVAS,
       width: 720,
       height: 1280,
@@ -68,9 +68,8 @@ class playGame extends Phaser.Scene
 
   create ()
   {
-
-  text_stage = this.add.text(50, 50, 'STAGE : 1', { fontFamily: 'Arial', fontSize: 25, color: '#ffffff' });
-  text_score = this.add.text(50, 100, 'SCORE : 0', { fontFamily: 'Arial', fontSize: 25, color: '#ffffff' });
+   text_stage = this.add.text(50, 50, 'STAGE : 1', { fontFamily: 'Arial', fontSize: 25, color: '#ffffff' });
+   text_score = this.add.text(50, 100, 'SCORE : 0', { fontFamily: 'Arial', fontSize: 25, color: '#ffffff' });
 
 	 player = this.physics.add.image(game.config.width/2, game.config.height/2 + 250, 'balls', Phaser.Math.Between(0,5)).setActive();
 	 bomb = this.physics.add.image(game.config.width/2, game.config.height / 8, 'bomb').setActive();
@@ -84,8 +83,7 @@ class playGame extends Phaser.Scene
           var hit = player.body.hitTest(x,y);
           if(hit)
           {
-                player.setScale(4);
-                player.setAlpha(0.2);
+                game_Scene.death();
                 //game END
           }
           return hit;
@@ -244,8 +242,11 @@ class playGame extends Phaser.Scene
   }
   death()
   {
+    this.scene.pause();
     player.setScale(4);
-    player.setAlpha(0.2);
+    player.setAlpha(0.2); 
+
+     Client.death_p();
   }
 }
 

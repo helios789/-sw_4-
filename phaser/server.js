@@ -44,6 +44,11 @@ io.on('connection',function(socket){
         console.log('stop');
         socket.broadcast.emit('stop_p', socket.player);
     });
+
+    socket.on('death',function(){
+        console.log('death');
+        socket.broadcast.emit('death', socket.player);
+    });
 });
 
 server.listen(process.env.PORT || 3000,function(){

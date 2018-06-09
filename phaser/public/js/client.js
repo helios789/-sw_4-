@@ -13,6 +13,9 @@ Client.move_p_Left = function(){
 Client.stop_p = function(){
     Client.socket.emit('stop');
 };
+Client.death_p = function(){
+    Client.socket.emit('death');
+};
 
 
 
@@ -37,5 +40,9 @@ Client.socket.on('get_allplayer',function(other_players){
 
     Client.socket.on('stop_p',function(player){
         game_Scene.stop_p(player.id);
+    });
+    Client.socket.on('death',function(player){
+        //game_Scene.stop_p(player.id);
+        console.log('death!');
     });
 });

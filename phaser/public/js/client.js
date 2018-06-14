@@ -41,8 +41,10 @@ Client.socket.on('get_allplayer',function(other_players){
     Client.socket.on('stop_p',function(player){
         game_Scene.stop_p(player.id);
     });
-    Client.socket.on('death',function(player){
-        //game_Scene.stop_p(player.id);
-        console.log('death!');
-    });
+
+});
+
+Client.socket.on('death',function(player){
+    //game_Scene.stop_p(player.id);
+    console.log('death!');
 });

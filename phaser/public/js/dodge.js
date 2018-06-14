@@ -17,9 +17,11 @@ window.onload = function(){
       scene: [game_Scene]
   };
   game = new Phaser.Game(gameConfig);
-    window.focus()
-    resize();
-    window.addEventListener("resize", resize, false);
+   window.focus()
+   resize();
+   window.addEventListener("resize", resize, false);  
+   
+
 }
 
 var player;
@@ -61,6 +63,7 @@ class playGame extends Phaser.Scene
       this.load.image('button_R','../assets/Rbutton.png');
       this.load.image('button_R_active','../assets/Rbutton_active.png');
       this.load.atlas('flares', '../assets/flares.png', '../assets/flares.json');
+      this.load.spritesheet('explode', '../assets/explode.png',  { frameWidth: 128, frameHeight: 128 });
       this.load.json('enemy1', '../assets/enemy1.json');
       this.load.json('enemy2', '../assets/enemy2.json');
       this.load.json('enemy3', '../assets/enemy3.json');
@@ -68,8 +71,8 @@ class playGame extends Phaser.Scene
 
   create ()
   {
-   text_stage = this.add.text(50, 50, 'STAGE : 1', { fontFamily: 'Arial', fontSize: 25, color: '#ffffff' });
-   text_score = this.add.text(50, 100, 'SCORE : 0', { fontFamily: 'Arial', fontSize: 25, color: '#ffffff' });
+    text_stage = this.add.text(50, 50, 'STAGE : 1', { fontFamily: 'Arial', fontSize: 25, color: '#ffffff' });
+    text_score = this.add.text(50, 100, 'SCORE : 0', { fontFamily: 'Arial', fontSize: 25, color: '#ffffff' });
 
 	 player = this.physics.add.image(game.config.width/2, game.config.height/2 + 250, 'balls', Phaser.Math.Between(0,5)).setActive();
 	 bomb = this.physics.add.image(game.config.width/2, game.config.height / 8, 'bomb').setActive();
@@ -156,17 +159,8 @@ class playGame extends Phaser.Scene
   	{
   		player_pos += player_speed;
   	}
-    //graphics.clear();
   	player.x = game.config.width /2 + Math.cos(player_pos) * 250;
   	player.y = game.config.height/2 + Math.sin(player_pos) * 250;
-
-    //graphics.strokeCircleShape(deathZone);
-    //deathZone.x = player.x;
-    //deathZone.y = player.y;
-  	//center + cos(iter) * radius 
-  	//player.x += Math.cos(player_pos) * 5;
-  	//player.y += Math.sin(player_pos) * 5;
-
 
   	bomb_pos += bomb_speed;
   	bomb.y = game.config.height/2 + Math.sin(bomb_pos) * game.config.height / 3 ;
@@ -179,13 +173,8 @@ class playGame extends Phaser.Scene
   		  	others.player[i].x = game.config.width /2 + Math.cos(others.pos[i]) * 250;
   			  others.player[i].y = game.config.height/2 + Math.sin(others.pos[i]) * 250;
       	}
-      }
+    }
 
-  	//if (this.checkOverlap(bomb))
-  	{
-  		//player.setScale(4);
-  		//player.setAlpha(0.2);
-  	}
     score++;
     if(score % 10 == 0)
       text_score.setText('SCORE : '+score);
@@ -242,11 +231,22 @@ class playGame extends Phaser.Scene
   }
   death()
   {
-    this.scene.pause();
-    player.setScale(4);
-    player.setAlpha(0.2); 
+    //this.scene.pause();    
+    var explode = this.add.sprite(player.x, player.y, 'explode').setScale(2);
+    this.anims.create({
+        key: 'die',
+        frames: this.anims.generateFrameNumbers('explode', { start: 0, end: 15 }),
+        frameRate: 25,
+        repeat: 0
+    });
+    explode.anims.play('die', false);
+    deathZone.contains = function() {  return false; }
 
-     Client.death_p();
+    player.destroy();
+    game.input.enabled = false;
+    game.input.keyboard.enabled = false;
+    
+    Client.death_p();
   }
 }
 
@@ -258,7 +258,7 @@ function resize() {
     var windowWidth = window.innerWidth;
     var windowHeight = window.innerHeight;
     var windowRatio = windowWidth / windowHeight;
-    var gameRatio = game.config.width / game.config.height;
+    var gameRatio = 720 / 1280;
     if(windowRatio < gameRatio){
         canvas.style.width = windowWidth + "px";
         canvas.style.height = (windowWidth / gameRatio) + "px";
